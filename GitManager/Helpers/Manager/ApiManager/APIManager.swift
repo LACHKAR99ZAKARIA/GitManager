@@ -30,6 +30,9 @@ class APIManager {
             })
         }
         
+        // URLQueryItem ne code pas « + » : GitLab le lirait comme un espace.
+        urlComponents.percentEncodedQuery = urlComponents.percentEncodedQuery?.replacingOccurrences(of: "+", with: "%2B")
+        
         var urlRequest = URLRequest(url: urlComponents.url!)
         urlRequest.httpMethod = endpoint.method.rawValue
         

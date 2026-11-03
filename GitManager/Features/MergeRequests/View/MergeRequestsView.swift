@@ -151,7 +151,10 @@ struct MergeRequestsView: View {
     
     private func row(for mergeRequest: GitLabMergeRequest) -> some View {
         VStack(spacing: 0) {
-            MergeRequestRowView(mergeRequest: mergeRequest)
+            NavigationLink(value: Route.mergeRequestDetails(project, mergeRequest)) {
+                MergeRequestRowView(mergeRequest: mergeRequest)
+            }
+            .buttonStyle(.plain)
             
             Rectangle()
                 .fill(Color.neutral200.opacity(0.6))
