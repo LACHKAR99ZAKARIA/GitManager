@@ -7,14 +7,14 @@
 
 import SwiftUI
 
-enum Route {
-    case repository
+enum Route: Hashable {
+    case repository(GitLabProject)
     
     @ViewBuilder
     var view: some View {
         switch self {
-        case .repository:
-            EmptyView()
+        case .repository(let project):
+            RepoDetailsView(project: project)
         }
     }
 }

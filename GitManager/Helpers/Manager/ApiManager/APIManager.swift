@@ -39,7 +39,6 @@ class APIManager {
         if let headers = endpoint.headers {
             for (key, value) in headers {
                 urlRequest.setValue(value, forHTTPHeaderField: key)
-                print("Header: \(key): \(value)")
             }
         }
         
@@ -57,8 +56,6 @@ class APIManager {
         }
         
         let decoder = JSONDecoder()
-        let dataDecoded = try decoder.decode(T.self, from: data)
-        print(dataDecoded)
         return try decoder.decode(T.self, from: data)
     }
 }

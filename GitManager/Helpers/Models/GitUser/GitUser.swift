@@ -15,6 +15,8 @@ struct GitUser: Codable, Identifiable, Hashable, Transferable {
     var token: String
     var showInfos = true
     var profileImage: URL?
+    var username: String?
+    var name: String?
     
     func addUser() {
 //        AppState.shared.addUser(self)

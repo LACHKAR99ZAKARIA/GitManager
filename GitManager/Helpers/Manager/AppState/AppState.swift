@@ -36,4 +36,31 @@ class AppState: ObservableObject {
             }
         }
     }
+    
+    var selectedUserID: UUID? {
+        get {
+            UserDefaults.standard.string(forKey: loggedUserKey).flatMap(UUID.init(uuidString:))
+        }
+        set {
+            objectWillChange.send()
+            UserDefaults.standard.set(newValue?.uuidString, forKey: loggedUserKey)
+        }
+    }
+    
+    /// Le compte sélectionné, ou le premier compte par défaut.
+    var currentUser: GitUser? {
+        let allUsers = users
+        return allUsers.first { $0.id == selectedUserID } ?? allUsers.first
+    }
+    
+    func selectUser(_ user: GitUser) {
+        selectedUserID = user.id
+    }
+    
+    /// À appeler uniquement une fois le token validé par GitLab.
+    func addUser(_ user: GitUser) {
+        objectWillChange.send()
+        users.append(user)
+        selectedUserID = user.id
+    }
 }
