@@ -11,7 +11,7 @@ import SwiftUI
 struct GitManagerApp: App {
     var body: some Scene {
         WindowGroup {
-            RootView()
+            DashboardView()
         }
     }
 }
