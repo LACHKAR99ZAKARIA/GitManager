@@ -22,9 +22,38 @@ class DashboardViewModel: ObservableObject {
     @Published var addUserErrorMessage: String?
     
     @Published var projects: [GitLabProject] = []
-    @Published var isLoadingProjects = false
+    @Published var isRepoLoading = false
     @Published var hasLoadedProjects = false
     @Published var projectsErrorMessage: String?
+    
+    @Published var filterSheet: ProjectFilterSheet?
+    @Published var visibilityFilter: ProjectVisibilityFilter = .all
+    @Published var sort: ProjectSort = .recentActivity
+    
+    /// Nombre de filtres actifs (affiché dans le badge du bouton filtre).
+    var activeFiltersCount: Int {
+        visibilityFilter == .all ? 0 : 1
+    }
+    
+    var filteredProjects: [GitLabProject] {
+        let filtered = projects.filter { project in
+            visibilityFilter == .all || project.visibility == visibilityFilter.rawValue
+        }
+        
+        switch sort {
+        case .recentActivity:
+            // Les dates ISO 8601 se comparent correctement comme du texte.
+            return filtered.sorted { ($0.lastActivityAt ?? "") > ($1.lastActivityAt ?? "") }
+        case .name:
+            return filtered.sorted { $0.name.localizedCaseInsensitiveCompare($1.name) == .orderedAscending }
+        case .stars:
+            return filtered.sorted { $0.starCount > $1.starCount }
+        }
+    }
+    
+    func resetFilters() {
+        visibilityFilter = .all
+    }
     
     func presentAddUser() {
         addUserErrorMessage = nil
@@ -60,10 +89,10 @@ class DashboardViewModel: ObservableObject {
         if showsLoader {
             projects = []
             hasLoadedProjects = false
-            isLoadingProjects = true
+            isRepoLoading = true
         }
         projectsErrorMessage = nil
-        defer { isLoadingProjects = false }
+        defer { isRepoLoading = false }
         
         do {
             let result: [GitLabProject] = try await APIManager.shared.performRequest(
@@ -80,29 +109,6 @@ class DashboardViewModel: ObservableObject {
     }
     
     private func message(for error: Error) -> String {
-        let nsError = error as NSError
-        
-        if nsError.domain == "APIError" {
-            switch nsError.code {
-            case 401:
-                return "Token invalide ou expiré."
-            case 403:
-                return "Accès refusé. Vérifiez les droits du token (scopes read_user et read_api)."
-            case 404:
-                return "Serveur GitLab introuvable à cette URL."
-            default:
-                break
-            }
-        }
-        
-        if error is DecodingError {
-            return "Réponse inattendue : cette URL ne semble pas être un serveur GitLab."
-        }
-        
-        if nsError.domain == NSURLErrorDomain {
-            return "Impossible de joindre le serveur. Vérifiez l'URL et votre connexion."
-        }
-        
-        return APIError.custom(message: nsError.localizedDescription).message
+        error.gitLabMessage
     }
 }

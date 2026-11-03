@@ -29,3 +29,21 @@ struct GitLabProject: Decodable, Identifiable, Hashable {
         case lastActivityAt = "last_activity_at"
     }
 }
+
+extension GitLabProject {
+    /// Données factices pour le skeleton pendant le chargement des dépôts.
+    static let placeholders: [GitLabProject] = (1...5).map { index in
+        GitLabProject(
+            id: -index,
+            name: "Nom du dépôt",
+            nameWithNamespace: "groupe / Nom du dépôt",
+            description: "Description du dépôt sur une ligne",
+            webURL: URL(string: "https://gitlab.com")!,
+            avatarURL: nil,
+            starCount: 0,
+            forksCount: 0,
+            visibility: nil,
+            lastActivityAt: nil
+        )
+    }
+}

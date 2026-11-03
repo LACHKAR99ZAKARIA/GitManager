@@ -56,6 +56,34 @@ struct DashboardView: View {
             )
             .presentationDetents([.medium, .large])
         }
+        .sheet(item: $viewModel.filterSheet) { sheet in
+            switch sheet {
+            case .visibility:
+                FilterOptionsView(
+                    title: "Visibilité",
+                    options: ProjectVisibilityFilter.allCases,
+                    selection: viewModel.visibilityFilter,
+                    optionTitle: { $0.menuTitle },
+                    onSelect: { filter in
+                        viewModel.visibilityFilter = filter
+                        viewModel.filterSheet = nil
+                    }
+                )
+                .presentationDetents([.medium, .large])
+            case .sort:
+                FilterOptionsView(
+                    title: "Trier par",
+                    options: ProjectSort.allCases,
+                    selection: viewModel.sort,
+                    optionTitle: { $0.title },
+                    onSelect: { sort in
+                        viewModel.sort = sort
+                        viewModel.filterSheet = nil
+                    }
+                )
+                .presentationDetents([.medium, .large])
+            }
+        }
         .sheet(isPresented: $viewModel.showAddUser) {
             AddUserView(
                 errorMessage: viewModel.addUserErrorMessage,
@@ -74,7 +102,7 @@ struct DashboardView: View {
             .presentationDetents([.medium])
             .interactiveDismissDisabled(viewModel.isLoading)
         }
-        .loader(isLoading: viewModel.isLoading || viewModel.isLoadingProjects)
+        .loader(isLoading: viewModel.isLoading)
     }
 
     var noUsersAvailableView: some View {
@@ -103,20 +131,29 @@ struct DashboardView: View {
             .padding(.horizontal, 24)
             .padding(.vertical, 12)
             
+            filterBar
+            
             ScrollView {
                 LazyVStack(spacing: 12) {
                     if let errorMessage = viewModel.projectsErrorMessage {
                         Text(errorMessage)
                             .font(.footnote)
                             .foregroundStyle(.red)
-                    } else if viewModel.hasLoadedProjects && viewModel.projects.isEmpty {
-                        Text("Aucun dépôt")
+                    } else if viewModel.hasLoadedProjects && viewModel.filteredProjects.isEmpty {
+                        Text(viewModel.projects.isEmpty ? "Aucun dépôt" : "Aucun dépôt ne correspond aux filtres")
                             .font(.footnote)
                             .foregroundStyle(Color.neutral300)
                     }
                     
-                    ForEach(viewModel.projects) { project in
-                        ProjectRowView(project: project)
+                    if viewModel.isRepoLoading {
+                        ForEach(GitLabProject.placeholders) { project in
+                            ProjectRowView(project: project)
+                        }
+                        .skeleton(isLoading: true)
+                    } else {
+                        ForEach(viewModel.filteredProjects) { project in
+                            ProjectRowView(project: project)
+                        }
                     }
                 }
                 .padding(.horizontal, 24)
@@ -127,6 +164,57 @@ struct DashboardView: View {
                 await viewModel.loadProjects(for: user, showsLoader: false)
             }
         }
+    }
+}
+
+extension DashboardView {
+    var filterBar: some View {
+        ScrollView(.horizontal, showsIndicators: false) {
+            HStack(spacing: 8) {
+                Button {
+                    viewModel.resetFilters()
+                } label: {
+                    HStack(spacing: 8) {
+                        Image(systemName: "line.3.horizontal.decrease")
+                        
+                        if viewModel.activeFiltersCount > 0 {
+                            Text("\(viewModel.activeFiltersCount)")
+                                .font(.caption.bold())
+                                .foregroundStyle(Color.bg10)
+                                .frame(minWidth: 20, minHeight: 20)
+                                .background(Color.principal, in: Circle())
+                        }
+                    }
+                    .foregroundStyle(Color.principal)
+                    .padding(.horizontal, 14)
+                    .padding(.vertical, 8)
+                    .glassBackground(in: Capsule(), interactive: true)
+                }
+                .buttonStyle(.plain)
+                .disabled(viewModel.activeFiltersCount == 0)
+                
+                Button {
+                    viewModel.filterSheet = .visibility
+                } label: {
+                    FilterChip(
+                        title: viewModel.visibilityFilter.title,
+                        isActive: viewModel.visibilityFilter != .all
+                    )
+                }
+                .buttonStyle(.plain)
+                
+                Button {
+                    viewModel.filterSheet = .sort
+                } label: {
+                    FilterChip(title: "Tri : \(viewModel.sort.title)")
+                }
+                .buttonStyle(.plain)
+            }
+            .padding(.horizontal, 24)
+            // Marge pour que l'ombre du glass ne soit pas coupée par le ScrollView.
+            .padding(.vertical, 8)
+        }
+        .padding(.bottom, 4)
     }
 }
 

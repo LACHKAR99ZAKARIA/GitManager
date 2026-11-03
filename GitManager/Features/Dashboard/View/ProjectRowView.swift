@@ -43,7 +43,8 @@ struct ProjectRowView: View {
             .multilineTextAlignment(.leading)
             .frame(maxWidth: .infinity, alignment: .leading)
             .padding(16)
-            .background(Color.bg25, in: RoundedRectangle(cornerRadius: 12))
+            .glassBackground(in: RoundedRectangle(cornerRadius: 12), interactive: true)
+            .contentShape(RoundedRectangle(cornerRadius: 12))
         }
         .buttonStyle(.plain)
     }

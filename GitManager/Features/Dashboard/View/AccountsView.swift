@@ -63,7 +63,8 @@ struct AccountsView: View {
                 }
             }
             .padding(12)
-            .background(Color.bg25, in: RoundedRectangle(cornerRadius: 12))
+            .glassBackground(in: RoundedRectangle(cornerRadius: 12), interactive: true)
+            .contentShape(RoundedRectangle(cornerRadius: 12))
         }
         .buttonStyle(.plain)
     }
