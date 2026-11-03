@@ -43,14 +43,15 @@ struct RepoDetailsView: View {
         .navigationTitle(project.name)
         .navigationBarTitleDisplayMode(.inline)
         .sheet(isPresented: $viewModel.showBranches) {
-            BranchesView(
+            BranchPickerView(
+                title: "Choisir une branche",
                 branches: viewModel.branches,
-                selectedBranch: viewModel.currentBranch
+                selectedName: viewModel.currentBranch
             ) { branch in
                 viewModel.selectedBranch = branch.name
                 viewModel.showBranches = false
             }
-            .presentationDetents([.medium, .large])
+            .presentationDetents([.large])
         }
         .task {
             guard let user = appState.currentUser else {

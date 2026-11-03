@@ -14,6 +14,9 @@ enum GitLabEndpoint: APIEndpoint {
     case mergeRequests(baseURL: URL, token: String, projectID: Int)
     case contributors(baseURL: URL, token: String, projectID: Int)
     case mergeRequestList(baseURL: URL, token: String, projectID: Int, state: MergeRequestState)
+    /// Compare deux branches : `from` = branche de base, `to` = branche à comparer.
+    case compare(baseURL: URL, token: String, projectID: Int, from: String, to: String)
+    case createMergeRequest(baseURL: URL, token: String, projectID: Int, source: String, target: String, title: String)
     case branches(baseURL: URL, token: String, projectID: Int)
     /// Utilisateurs ayant mis une étoile, filtrés par `search` (nom d'utilisateur).
     case starrers(baseURL: URL, token: String, projectID: Int, search: String)
@@ -27,6 +30,8 @@ enum GitLabEndpoint: APIEndpoint {
              .projectDetails(let baseURL, let token, _),
              .mergeRequests(let baseURL, let token, _),
              .mergeRequestList(let baseURL, let token, _, _),
+             .compare(let baseURL, let token, _, _, _),
+             .createMergeRequest(let baseURL, let token, _, _, _, _),
              .contributors(let baseURL, let token, _),
              .branches(let baseURL, let token, _),
              .starrers(let baseURL, let token, _, _),
@@ -52,6 +57,10 @@ enum GitLabEndpoint: APIEndpoint {
             return "api/v4/projects/\(projectID)/merge_requests"
         case .mergeRequestList(_, _, let projectID, _):
             return "api/v4/projects/\(projectID)/merge_requests"
+        case .compare(_, _, let projectID, _, _):
+            return "api/v4/projects/\(projectID)/repository/compare"
+        case .createMergeRequest(_, _, let projectID, _, _, _):
+            return "api/v4/projects/\(projectID)/merge_requests"
         case .contributors(_, _, let projectID):
             return "api/v4/projects/\(projectID)/repository/contributors"
         case .branches(_, _, let projectID):
@@ -67,7 +76,7 @@ enum GitLabEndpoint: APIEndpoint {
     
     var method: HTTPMethod {
         switch self {
-        case .star, .unstar:
+        case .star, .unstar, .createMergeRequest:
             return .post
         default:
             return .get
@@ -95,6 +104,10 @@ enum GitLabEndpoint: APIEndpoint {
             return ["state": state.rawValue, "order_by": "updated_at", "sort": "desc", "per_page": 100]
         case .contributors, .branches:
             return ["per_page": 100]
+        case .compare(_, _, _, let from, let to):
+            return ["from": from, "to": to]
+        case .createMergeRequest(_, _, _, let source, let target, let title):
+            return ["source_branch": source, "target_branch": target, "title": title]
         case .starrers(_, _, _, let search):
             return ["search": search, "per_page": 100]
         case .currentUser, .star, .unstar:

@@ -27,6 +27,8 @@ class DashboardViewModel: ObservableObject {
     @Published var projectsErrorMessage: String?
     
     @Published var filterSheet: ProjectFilterSheet?
+    @Published var searchText = ""
+    @Published var isSearchVisible = false
     @Published var visibilityFilter: ProjectVisibilityFilter = .all
     @Published var sort: ProjectSort = .recentActivity
     
@@ -36,8 +38,14 @@ class DashboardViewModel: ObservableObject {
     }
     
     var filteredProjects: [GitLabProject] {
+        let query = searchText.trimmingCharacters(in: .whitespacesAndNewlines)
         let filtered = projects.filter { project in
-            visibilityFilter == .all || project.visibility == visibilityFilter.rawValue
+            let matchesVisibility = visibilityFilter == .all || project.visibility == visibilityFilter.rawValue
+            let matchesSearch = query.isEmpty
+                || project.name.localizedCaseInsensitiveContains(query)
+                || project.nameWithNamespace.localizedCaseInsensitiveContains(query)
+                || (project.description?.localizedCaseInsensitiveContains(query) ?? false)
+            return matchesVisibility && matchesSearch
         }
         
         switch sort {
@@ -48,6 +56,13 @@ class DashboardViewModel: ObservableObject {
             return filtered.sorted { $0.name.localizedCaseInsensitiveCompare($1.name) == .orderedAscending }
         case .stars:
             return filtered.sorted { $0.starCount > $1.starCount }
+        }
+    }
+    
+    func toggleSearch() {
+        isSearchVisible.toggle()
+        if !isSearchVisible {
+            searchText = ""
         }
     }
     

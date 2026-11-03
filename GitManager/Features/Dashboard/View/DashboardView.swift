@@ -119,17 +119,38 @@ struct DashboardView: View {
     
     var usersAvailableView: some View {
         VStack(spacing: 0) {
-            HStack {
-                Button {
-                    viewModel.showAccounts = true
-                } label: {
-                    AvatarView(url: appState.currentUser?.profileImage, size: 40)
+            if viewModel.isSearchVisible {
+                SearchField(
+                    placeholder: "Rechercher un dépôt",
+                    text: $viewModel.searchText,
+                    onClose: { viewModel.toggleSearch() }
+                )
+                .padding(.horizontal, 24)
+                .padding(.vertical, 12)
+            } else {
+                HStack {
+                    Button {
+                        viewModel.showAccounts = true
+                    } label: {
+                        AvatarView(url: appState.currentUser?.profileImage, size: 40)
+                    }
+                    
+                    Spacer()
+                    
+                    Button {
+                        viewModel.toggleSearch()
+                    } label: {
+                        Image(systemName: "magnifyingglass")
+                            .font(.headline)
+                            .foregroundStyle(Color.principal)
+                            .frame(width: 40, height: 40)
+                            .glassBackground(in: Circle(), interactive: true)
+                    }
+                    .buttonStyle(.plain)
                 }
-                
-                Spacer()
+                .padding(.horizontal, 24)
+                .padding(.vertical, 12)
             }
-            .padding(.horizontal, 24)
-            .padding(.vertical, 12)
             
             filterBar
             

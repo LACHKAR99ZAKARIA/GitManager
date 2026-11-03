@@ -19,6 +19,17 @@ struct MergeRequestsView: View {
                 .ignoresSafeArea()
             
             VStack(spacing: 0) {
+                if viewModel.isSearchVisible {
+                    SearchField(
+                        placeholder: "Rechercher une merge request",
+                        text: $viewModel.searchText,
+                        onClose: { viewModel.toggleSearch() }
+                    )
+                    .padding(.horizontal, 24)
+                    .padding(.top, 8)
+                    .padding(.bottom, 4)
+                }
+                
                 filterBar
                 
                 ScrollView {
@@ -57,6 +68,50 @@ struct MergeRequestsView: View {
         }
         .navigationTitle("Merge Requests")
         .navigationBarTitleDisplayMode(.inline)
+        // Pendant la recherche, la barre de recherche prend la place de la barre de navigation (comme sur GitHub).
+        .toolbar(viewModel.isSearchVisible ? .hidden : .visible, for: .navigationBar)
+        .toolbar {
+            ToolbarItemGroup(placement: .navigationBarTrailing) {
+                Button {
+                    viewModel.presentCreate()
+                } label: {
+                    Image(systemName: "plus")
+                }
+                
+                Button {
+                    viewModel.toggleSearch()
+                } label: {
+                    Image(systemName: "magnifyingglass")
+                }
+            }
+        }
+        .loader(isLoading: viewModel.isCreating)
+        .sheet(isPresented: $viewModel.showCreate) {
+            CreateMergeRequestView(
+                project: project,
+                errorMessage: viewModel.createErrorMessage,
+                isCreating: viewModel.isCreating
+            ) { source, target, title in
+                guard let user = appState.currentUser else { return }
+                Task {
+                    guard await viewModel.createMergeRequest(
+                        project: project,
+                        user: user,
+                        source: source,
+                        target: target,
+                        title: title
+                    ) else { return }
+                    viewModel.showCreate = false
+                    if viewModel.state != .opened {
+                        viewModel.state = .opened
+                    } else {
+                        await viewModel.load(project: project, user: user)
+                    }
+                }
+            }
+            .presentationDetents([.large])
+            .interactiveDismissDisabled(viewModel.isCreating)
+        }
         .task(id: viewModel.state) {
             guard let user = appState.currentUser else {
                 viewModel.isLoading = false

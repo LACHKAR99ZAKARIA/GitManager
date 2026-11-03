@@ -20,6 +20,8 @@ extension Error {
                 return "Accès refusé. Vérifiez les droits du token (scopes read_user et read_api)."
             case 404:
                 return "Serveur GitLab introuvable à cette URL."
+            case 409:
+                return "Une merge request existe déjà pour ces branches."
             default:
                 break
             }
